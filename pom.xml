@@ -11,11 +11,11 @@
 
     <groupId>com.github.binarywang</groupId>
     <version>1.0.0-SNAPSHOT</version>
-    <artifactId>weixin-java-miniapp-demo</artifactId>
+    <artifactId>mm-family</artifactId>
     <packaging>jar</packaging>
 
-    <name>spring-boot-demo-for-wechat-miniapp</name>
-    <description>Spring Boot Demo with wechat miniapp</description>
+    <name>mm-family</name>
+    <description>mm-family</description>
 
     <properties>
         <weixin-java-miniapp.version>4.8.0</weixin-java-miniapp.version>
