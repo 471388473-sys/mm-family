@@ -1,32 +1,95 @@
-[![码云Gitee](https://gitee.com/binary/weixin-java-miniapp-demo/badge/star.svg?theme=blue)](https://gitee.com/binary/weixin-java-miniapp-demo)
-[![Github](http://github-svg-buttons.herokuapp.com/star.svg?user=binarywang&repo=weixin-java-miniapp-demo&style=flat&background=1081C1)](https://github.com/binarywang/weixin-java-miniapp-demo)
-[![Build Status](https://travis-ci.org/binarywang/weixin-java-miniapp-demo.svg?branch=master)](https://travis-ci.org/binarywang/weixin-java-miniapp-demo)
------------------------
+# mm-family 微信小程序后端服务
 
-<table align="center" cellspacing="0" cellpadding="0">
-  <tbody>
-    <tr>
-			<td align="left" valign="middle">
-        <a href="http://mp.weixin.qq.com/mp/homepage?__biz=MzI3MzAwMzk4OA==&hid=1&sn=f31af3bf562b116b061c9ab4edf70b61&scene=18#wechat_redirect" target="_blank">
-				  <img height="120" src="https://gitee.com/binary/weixin-java-tools/raw/develop/images/qrcodes/mp.png">
-        </a>
-			</td>
-			<td align="center" valign="middle">
-				<a href="https://promotion.aliyun.com/ntms/act/qwbk.html?userCode=7makzf5h" target="_blank">
-					<img height="120" src="https://gitee.com/binary/weixin-java-tools/raw/develop/images/banners/aliyun.jpg">
-				</a>
-			</td>
-		</tr>
-	</tbody>
-</table>
+基于 Spring Boot 2.6.3 + weixin-java-miniapp SDK 构建的微信小程序后端。
 
-### 本项目为WxJava的Demo演示程序，基于Spring Boot构建，实现微信小程序后端开发功能，支持多个小程序。
-更多信息请查阅：https://github.com/Wechat-Group/WxJava
+---
 
-## 使用步骤：
-1. **请注意，本demo为简化代码编译时加入了lombok支持，如果不了解lombok的话，请先学习下相关知识，比如可以阅读[此文章](https://mp.weixin.qq.com/s/cUc-bUcprycADfNepnSwZQ)**；
-1. 另外，新手遇到问题，请务必先阅读[【开发文档首页】](https://github.com/Wechat-Group/WxJava/wiki)的常见问题部分，可以少走很多弯路，节省不少时间。
-1. 配置：复制 `/src/main/resources/application.yml.template` 或者修改其扩展名生成 `application.yml` 文件，根据自己需要填写相关配置（需要注意的是：yml文件内的属性冒号后面的文字之前需要加空格，可参考已有配置，否则属性会设置不成功）；	
-1. 运行Java程序：`WxMaDemoApplication`；
-1. 如果需要接入消息服务，请配置微信小程序中的消息服务器地址：http://外网可访问的域名/wx/portal/{appid} （注意{appid}要使用对应的小程序的appid进行替换）， 官方文档接入指引：https://developers.weixin.qq.com/miniprogram/dev/framework/server-ability/message-push.html
-	
+## 技术栈
+
+| 技术 | 版本 | 说明 |
+|------|------|------|
+| Spring Boot | 2.6.3 | 基础框架 |
+| weixin-java-miniapp | 4.8.0 | 微信小程序 SDK |
+| Java | 1.8 | 运行环境 |
+| Thymeleaf | — | 模板引擎 |
+| Lombok | — | 简化样板代码 |
+| commons-fileupload | 1.6.0 | 文件上传 |
+| Jedis | — | Redis 客户端（可选） |
+
+---
+
+## 功能目录
+
+### 1. 用户认证 `/wx/user/{appid}`
+
+| 接口 | 方法 | 说明 |
+|------|------|------|
+| `/wx/user/{appid}/login` | GET | 小程序登录，用 `code` 换取 `sessionKey` 和 `openid` |
+| `/wx/user/{appid}/info` | GET | 获取并解密用户基本信息（昵称、头像、性别等） |
+| `/wx/user/{appid}/phone` | GET | 获取并解密用户绑定手机号 |
+
+### 2. 消息推送 `/wx/portal/{appid}`
+
+| 接口 | 方法 | 说明 |
+|------|------|------|
+| `/wx/portal/{appid}` | GET | 微信服务器签名验证（配置服务器时使用） |
+| `/wx/portal/{appid}` | POST | 接收微信推送消息，支持 JSON/XML、明文/AES 加密 |
+
+消息路由规则：
+
+- 内容含「订阅消息」→ 发送订阅模板消息
+- 内容含「文本」→ 回复文本客服消息
+- 内容含「图片」→ 上传图片并通过客服消息发送
+- 内容含「二维码」→ 生成小程序码并发送
+- 其他所有消息 → 记录日志
+
+### 3. 素材管理 `/wx/media/{appid}`
+
+| 接口 | 方法 | 说明 |
+|------|------|------|
+| `/wx/media/{appid}/upload` | POST | 上传临时素材到微信服务器，返回 `media_id` |
+| `/wx/media/{appid}/download/{mediaId}` | GET | 下载临时素材文件 |
+
+---
+
+## 部署配置
+
+### 环境变量
+
+| 变量名 | 必填 | 说明 |
+|--------|------|------|
+| `WX_APPID` | 是 | 微信小程序 AppID |
+| `WX_SECRET` | 是 | 微信小程序 Secret |
+| `WX_TOKEN` | 否 | 消息服务器 Token |
+| `WX_AES_KEY` | 否 | 消息 AES 加密密钥 |
+
+### Docker 构建
+
+```bash
+docker build -t mm-family .
+docker run -p 8080:8080 \
+  -e WX_APPID=your_appid \
+  -e WX_SECRET=your_secret \
+  mm-family
+```
+
+---
+
+## 项目结构
+
+```
+src/main/java/.../
+├── WxMaDemoApplication.java       # 启动类
+├── config/
+│   ├── WxMaConfiguration.java     # SDK 初始化、消息路由配置
+│   └── WxMaProperties.java        # 配置属性绑定
+├── controller/
+│   ├── WxPortalController.java    # 消息入口
+│   ├── WxMaUserController.java    # 用户接口
+│   └── WxMaMediaController.java   # 素材接口
+├── error/
+│   ├── ErrorController.java       # 错误页面
+│   └── ErrorPageConfiguration.java
+└── utils/
+    └── JsonUtils.java             # JSON 工具
+```
